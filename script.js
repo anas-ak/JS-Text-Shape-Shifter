@@ -71,3 +71,66 @@ S.Drawing = (function () {
     }
 }());
 
+/*=============*/
+
+S.UI = (function () {
+    var input = document.querySelector('.ui-input'),
+        ui = document.querySelector('.ui'),
+        help = document.querySelector('.help'),
+        commands = document.querySelector('.commands'),
+        overlay = document.querySelector('.overlay'),
+        canvas = document.querySelector('.canvas'),
+        interval,
+        isTouch = false, // ('ontouchstart' in window || navigator.msMaxTouchPoints)
+        currentAction,
+        resizeTimer,
+        time, 
+        maxShapeSize = 30,
+        firstAction = true,
+        sequence = [],
+        cmd = '#';
+
+        function formatTime(date) {
+            var h = date.getHours(),
+                m = date.getMinutes(),
+            m = m < 10 ? '0' + m : m;
+            return h + ':' + m;
+        }
+
+        function getValue(value) {
+            return value && value.split(' ')[1];
+        }
+
+        function getAction(value) {
+            value = value && value.split(' ') [0];
+            return value && value[0] === cmd && value.substring(1);
+        }
+
+        function timedAction(fn, delay, max, reverse) {
+            clearInterval(interval);
+            currentAction = reverse ? max : 1;
+            fn(currentAction);
+        
+
+            if(!max || (!reverse && currentAction < max) || (reverse && currentAction > 0)) {
+                interval = setInterval(function() {
+                    currentAction = reverse ? currentAction - 1 : currentAction + 1;
+                    fn(currentAction);
+
+                    if((!reverse && max && currentAction === max) || (reverse && currentAction === 0)) {
+                        clearInterval(interval);
+                    }
+                }, delay);
+            }
+        }
+
+        function reset(destroy) {
+            clearInterval(interval);
+            sequence = [];
+            time = null;
+            destroy && S.Shape.switchShape(S.ShapeBuilder.letter(''));
+        }
+        /************/
+
+
+    }())
