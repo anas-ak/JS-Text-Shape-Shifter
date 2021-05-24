@@ -132,5 +132,162 @@ S.UI = (function () {
         }
         /************/
 
+        function performAction(value) {
+            var action,
+                value,
+                current;
 
-    }())
+            overlay.classList.remove('overlay--visible');
+            sequence = typeof(value) === 'object' ? value : sequence.concat(value.split('|'));
+            input.value = '';
+            checkInputWidth();
+
+            timedAction(function (index) {
+                current = sequence.shift();
+                action = getAction(current);
+                value = getValue(current);
+
+                switch(action) {
+                    case 'countdown':
+                        value = parseInt(value) || 10;
+                        value = value > 0 ? value : 10;
+
+                        timedAction(function (index) {
+                            if(index === 0) {
+                                if(sequence.length === 0) {
+                                    S.Shape.switchShape(S.ShapeBuilder.letter(''));
+                                } else {
+                                    performAction(sequence);
+                                }
+                            } else {
+                                S.Shape.switchShape(S.ShapeBuilder.letter(index), true);
+                            }
+                        }, 1000, value, true);
+                        break;
+
+                        case 'rectangle':
+                            value = value && value.split('x');
+                            value = (value && value.length === 2) ? value : [maxShapeSize, maxShapeSize / 2];
+
+                            S.Shape.switchShape(S.ShapeBuilder.rectangle(Math.min(maxShapeSize, parseInt(value[0])), Math.min(maxShapeSize, parseInt(value[1]))));
+                            break;
+
+                        case 'circle':
+                            value = parseInt(value) || maxShapeSize;
+                            value = Math.min(value, maxShapeSize);
+                            S.Shape.switchShape(S.ShapeBuilder.circle(value));
+                            break;
+
+                        case 'time':
+                            var t = formatTime(new Date());
+
+                            if(sequence.length > 0) {
+                                S.Shape.switchShape(S.ShapeBuilder.letter(t));
+                            } else { 
+                                timedAction(function () {
+                                    t = formatTime(new Date());
+
+                                    if(t !== time) {
+                                        time = t;
+                                        S.Shape.switchShape(S.ShapeBuilder.letter(time));
+                                    }
+                                }, 1000);
+                            }
+                            break;
+
+                            default:
+                                S.Shape.switchShape(S.ShapeBuilder.letter(current[0] === cmd ? 'What?' : current));
+                }
+            }, 2000, sequence.length);
+        }
+
+        function checkInputWidth(e) {
+            if(input.value.length > 18) {
+                ui.classList.add('ui--wide');
+            } else {
+                ui.classList.remove('ui--wide');
+            }
+
+            if(firstAction && input.value.length > 0) {
+                ui.classList.add('ui--enter');
+            } else { 
+                ui.classList.remove('ui--enter');
+            }
+        }
+
+        function bindEvents() {
+            document.body.addEventListener('keydown', function(e){ 
+                input.focus();
+
+                if(e.keyCode === 13) {
+                    firstAction = false;
+                    reset();
+                    performAction(input.value);
+                }
+            });
+
+            input.addEventListener('input', checkInputWidth);
+            input.addEventListener('change', checkInputWidth);
+            input.addEventListener('focus', checkInputWidth);
+
+            help.addEventListener('click', function(e) {
+                overlay.classList.toggle('overlay--visible');
+                overlay.classList.contains('overlay--visible') && reset(true);
+            });
+
+            commands.addEventListener('click', function (e) {
+                var el, 
+                    info,
+                    demo, 
+                    tab,
+                    active,
+                    url;
+
+                if(e.target.classList.contains('commands-item')) {
+                    el = e.target;
+                } else {
+                    el = e.target.parentNode.classList.contains('commands-item') ? e.target.parentNode : e.target.parentNode.parentNode;
+                }
+
+                info = el && el.querySelector('.commands-item-info');
+                demo = el && info.getAttribute('data-demo');
+                url = el && info.getAttribute('data-url');
+
+                if(info) {
+                    overlay.classList.remove('overlay--visible');
+
+                    if(demo) {
+                        input.value = demo;
+
+                        if(isTouch) {
+                            reset();
+                            performAction(input.value);
+                        } else {
+                            input.focus();
+                        }
+                    } else if (url) {
+
+                    }
+                }
+            });
+
+            canvas.addEventListener('click', function(e) {
+                overlay.classList.remove('overlay--visible');
+            });
+        }
+
+        function init() {
+            bindEvents();
+            input.focus();
+            isTouch && document.body.classList.add('touch');
+        }
+
+        // Init
+        init();
+
+        return {
+            simulate: function (action) {
+                performAction(action);
+            }
+        }
+    }());
