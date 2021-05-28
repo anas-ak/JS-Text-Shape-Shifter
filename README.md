@@ -1,3 +1,3 @@
 # JS-Text-Shape-Shifter
 
-<p>Updated: May 21, 2021</p>
+<p>Updated: May 28, 2021</p>
